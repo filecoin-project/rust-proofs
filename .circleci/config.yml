@@ -21,6 +21,15 @@ jobs:
       - configure_environment_variables
       - checkout
       - run:
+          name: Update dependencies
+          command: apt-get update
+          no_output_timeout: 5m
+      - run:
+          name: Install dependencies
+          command: apt-get install -y clang-7 libfuzzer-7-dev libllvm7 llvm-7 llvm-7-dev llvm-7-runtime libc++-7-dev
+          no_output_timeout: 5m
+      - run: clang++-7 --version
+      - run:
           name: Calculate dependencies
           command: cargo generate-lockfile
           no_output_timeout: 30m
@@ -33,6 +42,7 @@ jobs:
       - run: rustup component add clippy
       - run: cargo update
       - run: cargo fetch
+      - run: cargo install cargo-fuzz
       - run: rustc +$(cat rust-toolchain) --version
       - persist_to_workspace:
           root: "."
@@ -138,6 +148,38 @@ jobs:
       - run:
           name: Benchmarks
           command: cargo +$(cat rust-toolchain) build --benches --verbose --workspace
+          no_output_timeout: 15m
+
+  fuzz_nightly:
+    docker:
+      - image: filecoin/rust:latest
+    working_directory: /mnt/crate
+    resource_class: 2xlarge+
+    steps:
+      - configure_environment_variables
+      - checkout
+      - attach_workspace:
+          at: "."
+      - restore_cache:
+          keys:
+            - cargo-v26d-{{ checksum "rust-toolchain" }}-{{ checksum "Cargo.toml" }}-{{ checksum "Cargo.lock" }}-{{ arch }}
+      - restore_parameter_cache
+      - run:
+          name: Fuzz (nightly)
+          command: |
+              cd filecoin-proofs
+              cargo +$(cat rust-toolchain) fuzz run --release seal_pre_commit_phase1
+              cargo +$(cat rust-toolchain) fuzz run --release seal_pre_commit_phase2
+              cargo +$(cat rust-toolchain) fuzz run --release seal_commit_phase1
+              cargo +$(cat rust-toolchain) fuzz run --release seal_commit_phase2
+              cargo +$(cat rust-toolchain) fuzz run --release compute_d
+              cargo +$(cat rust-toolchain) fuzz run --release verify_seal
+              cargo +$(cat rust-toolchain) fuzz run --release verify_batch_seal
+              cargo +$(cat rust-toolchain) fuzz run --release get_unsealed_range
+              cargo +$(cat rust-toolchain) fuzz run --release validate_cache_for_precommit_phase2
+              cargo +$(cat rust-toolchain) fuzz run --release validate_cache_for_commit
+              cargo +$(cat rust-toolchain) fuzz run --release generate_window_post
+              cargo +$(cat rust-toolchain) fuzz run --release verify_window_post
           no_output_timeout: 15m
 
   metrics_capture:

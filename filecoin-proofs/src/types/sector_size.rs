@@ -1,7 +1,9 @@
+use libfuzzer_sys::arbitrary;
+
 use crate::fr32::to_unpadded_bytes;
 use crate::types::*;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(arbitrary::Arbitrary, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct SectorSize(pub u64);
 
 impl From<u64> for SectorSize {

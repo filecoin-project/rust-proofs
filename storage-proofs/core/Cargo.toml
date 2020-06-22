@@ -43,6 +43,7 @@ thiserror = "1.0.6"
 neptune = { version = "1.0.1", features = ["gpu"] }
 cpu-time = { version = "1.0", optional = true }
 gperftools = { version = "0.2", optional = true }
+libfuzzer-sys = { version = "0.3", features = ["arbitrary-derive"] }
 
 [dev-dependencies]
 proptest = "0.10"

@@ -1,0 +1,72 @@
+[package]
+name = "filecoin-proofs-fuzz"
+version = "0.0.0"
+authors = ["Automatically generated"]
+publish = false
+edition = "2018"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+bincode = "1.1.2"
+hex = "0.4.2"
+typenum = "1.11.2"
+libfuzzer-sys = { version = "0.3", features = ["arbitrary-derive"] }
+
+[dependencies.filecoin-proofs]
+path = ".."
+[dependencies.storage-proofs]
+path = "../../storage-proofs"
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "generate_window_post"
+path = "fuzz_targets/generate_window_post.rs"
+
+[[bin]]
+name = "verify_window_post"
+path = "fuzz_targets/verify_window_post.rs"
+
+[[bin]]
+name = "seal_pre_commit_phase1"
+path = "fuzz_targets/seal_pre_commit_phase1.rs"
+
+[[bin]]
+name = "seal_pre_commit_phase2"
+path = "fuzz_targets/seal_pre_commit_phase2.rs"
+
+[[bin]]
+name = "seal_commit_phase1"
+path = "fuzz_targets/seal_commit_phase1.rs"
+
+[[bin]]
+name = "seal_commit_phase2"
+path = "fuzz_targets/seal_commit_phase2.rs"
+
+[[bin]]
+name = "compute_d"
+path = "fuzz_targets/compute_d.rs"
+
+[[bin]]
+name = "verify_seal"
+path = "fuzz_targets/verify_seal.rs"
+
+[[bin]]
+name = "verify_batch_seal"
+path = "fuzz_targets/verify_batch_seal.rs"
+
+[[bin]]
+name = "get_unsealed_range"
+path = "fuzz_targets/get_unsealed_range.rs"
+
+[[bin]]
+name = "validate_cache_for_precommit_phase2"
+path = "fuzz_targets/validate_cache_for_precommit_phase2.rs"
+
+[[bin]]
+name = "validate_cache_for_commit"
+path = "fuzz_targets/validate_cache_for_commit.rs"

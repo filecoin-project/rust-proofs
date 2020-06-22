@@ -1,5 +1,6 @@
 use std::marker::PhantomData;
 
+//use libfuzzer_sys::arbitrary;
 use log::trace;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};

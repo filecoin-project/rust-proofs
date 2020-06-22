@@ -1,3 +1,4 @@
+use libfuzzer_sys::arbitrary;
 use serde::{Deserialize, Serialize};
 use storage_proofs::hasher::Hasher;
 use storage_proofs::porep::stacked;
@@ -44,7 +45,7 @@ pub const OCT_ARITY: usize = 8;
 /// Arity for binary trees, used for comm_d.
 pub const BINARY_ARITY: usize = 2;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(arbitrary::Arbitrary, Debug, Clone, Serialize, Deserialize)]
 pub struct SealPreCommitOutput {
     pub comm_r: Commitment,
     pub comm_d: Commitment,

@@ -3,6 +3,7 @@ use std::fmt;
 
 use byteorder::ByteOrder;
 use ff::PrimeField;
+use libfuzzer_sys::arbitrary;
 use paired::bls12_381::{Fr, FrRepr};
 use serde::{Deserialize, Serialize};
 
@@ -11,7 +12,18 @@ pub type OrderedSectorSet = BTreeSet<SectorId>;
 
 /// Identifier for a single sector.
 #[derive(
-    Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash, Serialize, Deserialize,
+    arbitrary::Arbitrary,
+    Default,
+    Debug,
+    Clone,
+    Copy,
+    PartialOrd,
+    Ord,
+    PartialEq,
+    Eq,
+    Hash,
+    Serialize,
+    Deserialize,
 )]
 pub struct SectorId(u64);
 

@@ -1,11 +1,12 @@
 use std::fmt;
 
 use anyhow::{ensure, Result};
+use libfuzzer_sys::arbitrary;
 use serde::{Deserialize, Serialize};
 
 use crate::types::{Commitment, UnpaddedBytesAmount};
 
-#[derive(Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(arbitrary::Arbitrary, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PieceInfo {
     pub commitment: Commitment,
     pub size: UnpaddedBytesAmount,

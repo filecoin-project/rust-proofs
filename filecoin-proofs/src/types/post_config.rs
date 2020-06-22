@@ -1,12 +1,13 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
+use libfuzzer_sys::arbitrary;
 use storage_proofs::parameter_cache::{self, CacheableParameters};
 use storage_proofs::post::fallback;
 
 use crate::types::*;
 
-#[derive(Clone, Debug)]
+#[derive(arbitrary::Arbitrary, Clone, Debug)]
 pub struct PoStConfig {
     pub sector_size: SectorSize,
     pub challenge_count: usize,
@@ -16,7 +17,7 @@ pub struct PoStConfig {
     pub priority: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(arbitrary::Arbitrary, Debug, Clone, PartialEq, Eq)]
 pub enum PoStType {
     Winning,
     Window,

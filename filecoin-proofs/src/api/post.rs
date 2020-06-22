@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{ensure, Context, Result};
 use bincode::deserialize;
 use generic_array::typenum::Unsigned;
+use libfuzzer_sys::arbitrary;
 use log::{info, trace};
 use merkletree::store::StoreConfig;
 use storage_proofs::cache_key::CacheKey;
@@ -177,7 +178,7 @@ impl<Tree: 'static + MerkleTreeTrait> PrivateReplicaInfo<Tree> {
 
 /// The minimal information required about a replica, in order to be able to verify
 /// a PoSt over it.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(arbitrary::Arbitrary, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct PublicReplicaInfo {
     /// The replica commitment.
     comm_r: Commitment,

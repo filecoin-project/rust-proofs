@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Context;
 use generic_array::typenum::{self, Unsigned};
+use libfuzzer_sys::arbitrary;
 use log::trace;
 use merkletree::merkle::get_merkle_tree_leafs;
 use merkletree::store::{DiskStore, Store, StoreConfig};
@@ -321,7 +322,9 @@ pub struct Tau<D: Domain, E: Domain> {
 }
 
 /// Stored along side the sector on disk.
-#[derive(Default, Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(
+    arbitrary::Arbitrary, Default, Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize,
+)]
 pub struct PersistentAux<D> {
     pub comm_c: D,
     pub comm_r_last: D,

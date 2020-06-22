@@ -1,5 +1,6 @@
 use std::ops::{Add, Sub};
 
+use libfuzzer_sys::arbitrary;
 use serde::{Deserialize, Serialize};
 
 use crate::fr32::{to_padded_bytes, to_unpadded_bytes};
@@ -8,10 +9,34 @@ pub struct PoStProofBytesAmount(pub usize);
 
 pub struct PoRepProofBytesAmount(pub usize);
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, PartialOrd, Serialize, Deserialize, Eq, Ord)]
+#[derive(
+    arbitrary::Arbitrary,
+    Debug,
+    Default,
+    Clone,
+    Copy,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+    Eq,
+    Ord,
+)]
 pub struct UnpaddedByteIndex(pub u64);
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, PartialOrd, Serialize, Deserialize, Eq, Ord)]
+#[derive(
+    arbitrary::Arbitrary,
+    Debug,
+    Default,
+    Clone,
+    Copy,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+    Eq,
+    Ord,
+)]
 pub struct UnpaddedBytesAmount(pub u64);
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, PartialOrd, Serialize, Deserialize, Eq, Ord)]
