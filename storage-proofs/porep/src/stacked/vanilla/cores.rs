@@ -1,15 +1,15 @@
 use log::*;
 use std::sync::{Mutex, MutexGuard};
 
-use anyhow::Result;
-use hwloc::{ObjectType, Topology, TopologyObject, CPUBIND_THREAD};
+use anyhow::{bail, format_err, Result};
+use hwloc2::{CpuBindFlags, ObjectType, Topology, TopologyObject};
 use lazy_static::lazy_static;
 
 use storage_proofs_core::settings;
 
 type CoreGroup = Vec<CoreIndex>;
 lazy_static! {
-    pub static ref TOPOLOGY: Mutex<Topology> = Mutex::new(Topology::new());
+    pub static ref TOPOLOGY: Mutex<Option<Topology>> = Mutex::new(Topology::new());
     pub static ref CORE_GROUPS: Option<Vec<Mutex<CoreGroup>>> = {
         let settings = &settings::SETTINGS;
         let num_producers = settings.multicore_sdr_producers;
@@ -62,30 +62,36 @@ fn get_thread_id() -> ThreadId {
 
 pub struct Cleanup {
     tid: ThreadId,
-    prior_state: Option<hwloc::Bitmap>,
+    prior_state: Option<hwloc2::Bitmap>,
 }
 
 impl Drop for Cleanup {
     fn drop(&mut self) {
         if let Some(prior) = self.prior_state.take() {
-            let child_topo = &TOPOLOGY;
-            let mut locked_topo = child_topo.lock().expect("poisded lock");
-            let _ = locked_topo.set_cpubind_for_thread(self.tid, prior, CPUBIND_THREAD);
+            if let Some(ref mut locked_topo) = &mut *TOPOLOGY.lock().expect("poisoned lock") {
+                let _ = locked_topo.set_cpubind_for_thread(
+                    self.tid,
+                    prior,
+                    CpuBindFlags::CPUBIND_THREAD,
+                );
+            }
         }
     }
 }
 
 pub fn bind_core(core_index: CoreIndex) -> Result<Cleanup> {
-    let child_topo = &TOPOLOGY;
     let tid = get_thread_id();
-    let mut locked_topo = child_topo.lock().expect("poisoned lock");
-    let core = get_core_by_index(&locked_topo, core_index).map_err(|err| {
-        anyhow::format_err!("failed to get core at index {}: {:?}", core_index.0, err)
-    })?;
+    let mut guard = TOPOLOGY.lock().expect("poisoned lock");
+    let locked_topo = match &mut *guard {
+        Some(ref mut topo) => topo,
+        None => bail!("no hwloc topology available"),
+    };
+    let core = get_core_by_index(&locked_topo, core_index)
+        .map_err(|err| format_err!("failed to get core at index {}: {:?}", core_index.0, err))?;
 
-    let cpuset = core.allowed_cpuset().ok_or_else(|| {
-        anyhow::format_err!("no allowed cpuset for core at index {}", core_index.0,)
-    })?;
+    let cpuset = core
+        .cpuset()
+        .ok_or_else(|| format_err!("no allowed cpuset for core at index {}", core_index.0,))?;
     debug!("allowed cpuset: {:?}", cpuset);
     let mut bind_to = cpuset;
 
@@ -93,13 +99,13 @@ pub fn bind_core(core_index: CoreIndex) -> Result<Cleanup> {
     bind_to.singlify();
 
     // Thread binding before explicit set.
-    let before = locked_topo.get_cpubind_for_thread(tid, CPUBIND_THREAD);
+    let before = locked_topo.get_cpubind_for_thread(tid, CpuBindFlags::CPUBIND_THREAD);
 
     debug!("binding to {:?}", bind_to);
     // Set the binding.
     let result = locked_topo
-        .set_cpubind_for_thread(tid, bind_to, CPUBIND_THREAD)
-        .map_err(|err| anyhow::format_err!("failed to bind CPU: {:?}", err));
+        .set_cpubind_for_thread(tid, bind_to, CpuBindFlags::CPUBIND_THREAD)
+        .map_err(|err| format_err!("failed to bind CPU: {:?}", err));
 
     if result.is_err() {
         warn!("error in bind_core, {:?}", result);
@@ -116,23 +122,39 @@ fn get_core_by_index<'a>(topo: &'a Topology, index: CoreIndex) -> Result<&'a Top
 
     match topo.objects_with_type(&ObjectType::Core) {
         Ok(all_cores) if idx < all_cores.len() => Ok(all_cores[idx]),
-        Ok(all_cores) => Err(anyhow::format_err!(
+        Ok(all_cores) => Err(format_err!(
             "idx ({}) out of range for {} cores",
             idx,
             all_cores.len()
         )),
-        _e => Err(anyhow::format_err!("failed to get core by index {}", idx,)),
+        _e => Err(format_err!("failed to get core by index {}", idx,)),
     }
 }
 
 fn core_groups(cores_per_unit: usize) -> Option<Vec<Mutex<Vec<CoreIndex>>>> {
-    let topo = TOPOLOGY.lock().expect("poisoned lock");
+    let mut guard = TOPOLOGY.lock().expect("poisoned lock");
+    let topo = match &mut *guard {
+        Some(ref mut topo) => topo,
+        None => {
+            warn!("no topology available");
+            return None;
+        }
+    };
 
     let core_depth = match topo.depth_or_below_for_type(&ObjectType::Core) {
         Ok(depth) => depth,
-        Err(_) => return None,
+        Err(err) => {
+            warn!("failed to retrieve core depth: {:?}", err);
+            return None;
+        }
     };
-    let all_cores = topo.objects_with_type(&ObjectType::Core).unwrap();
+    let all_cores = match topo.objects_with_type(&ObjectType::Core) {
+        Ok(cores) => cores,
+        Err(err) => {
+            warn!("failed to retrieve cores: {:?}", err);
+            return None;
+        }
+    };
     let core_count = all_cores.len();
 
     let mut cache_depth = core_depth;
