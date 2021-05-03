@@ -126,18 +126,18 @@ fn core_groups(cores_per_unit: usize) -> Option<Vec<Mutex<Vec<CoreIndex>>>> {
     let topo = TOPOLOGY.lock().expect("poisoned lock");
 
     let core_depth = match topo.depth_or_below_for_type(&ObjectType::Core) {
-        Ok(depth) => depth,
+        Ok(depth) => dbg!(depth),
         Err(_) => return None,
     };
     let all_cores = topo.objects_with_type(&ObjectType::Core).unwrap();
-    let core_count = all_cores.len();
+    let core_count = dbg!(all_cores.len());
 
-    let mut cache_depth = core_depth;
+    let mut cache_depth = dbg!(core_depth);
     let mut cache_count = 0;
 
     while cache_depth > 0 {
         let objs = topo.objects_at_depth(cache_depth);
-        let obj_count = objs.len();
+        let obj_count = dbg!(objs.len());
         if obj_count < core_count {
             cache_count = obj_count;
             break;
@@ -146,7 +146,7 @@ fn core_groups(cores_per_unit: usize) -> Option<Vec<Mutex<Vec<CoreIndex>>>> {
         cache_depth -= 1;
     }
 
-    assert_eq!(0, core_count % cache_count);
+    assert_eq!(0, dbg!(core_count) % dbg!(cache_count));
     let mut group_size = core_count / cache_count;
     let mut group_count = cache_count;
 
