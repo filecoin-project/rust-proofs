@@ -13,6 +13,7 @@ use rayon::prelude::{IndexedParallelIterator, ParallelIterator, ParallelSliceMut
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use storage_proofs_core::{
+    api_version::ApiVersion,
     drgraph::{Graph, BASE_DEGREE},
     error::Result,
     parameter_cache::{with_exclusive_lock, LockedFile, ParameterSetMetadata, VERSION},
@@ -50,6 +51,7 @@ pub struct ParentCache {
     cache: CacheData,
     pub sector_size: usize,
     pub digest: String,
+    pub api_version: ApiVersion,
 }
 
 #[derive(Debug)]
@@ -277,6 +279,7 @@ impl ParentCache {
             num_cache_entries: cache_entries,
             sector_size: graph.size() * NODE_SIZE,
             digest: digest_hex,
+            api_version: graph.api_version(),
         })
     }
 
@@ -360,6 +363,7 @@ impl ParentCache {
             num_cache_entries: cache_entries,
             sector_size,
             digest: digest_hex,
+            api_version: graph.api_version(),
         })
     }
 

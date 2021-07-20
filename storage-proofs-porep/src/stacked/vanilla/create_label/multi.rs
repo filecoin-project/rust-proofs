@@ -19,6 +19,7 @@ use log::{debug, info};
 use mapr::MmapMut;
 use merkletree::store::{DiskStore, Store, StoreConfig};
 use storage_proofs_core::{
+    api_version::ApiVersion,
     cache_key::CacheKey,
     drgraph::{Graph, BASE_DEGREE},
     merkle::MerkleTreeTrait,
@@ -57,7 +58,7 @@ const SHA256_INITIAL_DIGEST: [u32; 8] = [
 fn fill_buffer(
     cur_node: u64,
     parents_cache: &CacheReader<u32>,
-    mut cur_parent: &[u32], // parents for this node
+    cur_parent: &[u32], // parents for this node
     layer_labels: &UnsafeSlice<'_, u32>,
     exp_labels: Option<&UnsafeSlice<'_, u32>>, // None for layer0
     buf: &mut [u8],
@@ -77,47 +78,45 @@ fn fill_buffer(
     // Node 5 (prev node) will always be missing, and there tend to be
     // frequent close references.
     if cur_node > MIN_BASE_PARENT_NODE {
-        // Mark base parent 5 as missing
-        // base_parent_missing.set_all(0x20);
-        base_parent_missing.set(5);
+        // Mark base parent predecessor node as missing
+        let (predecessor_index, other_drg_parents) = match parents_cache.api_version() {
+            ApiVersion::V1_0_0 => (BASE_DEGREE - 1, (0..BASE_DEGREE - 1)),
+            ApiVersion::V1_1_0 => (0, (1..BASE_DEGREE)),
+        };
+
+        base_parent_missing.set(predecessor_index);
 
         // Skip the last base parent - it always points to the preceding node,
         // which we know is not ready and will be filled in the main loop
-        for k in 0..BASE_DEGREE - 1 {
+        for k in other_drg_parents {
             unsafe {
-                if cur_parent[0] as u64 >= parents_cache.get_consumer() {
+                if cur_parent[k] as u64 >= parents_cache.get_consumer() {
                     // Node is not ready
                     base_parent_missing.set(k);
                 } else {
                     let parent_data = {
-                        let offset = cur_parent[0] as usize * NODE_WORDS;
+                        let offset = cur_parent[k] as usize * NODE_WORDS;
                         &layer_labels.as_slice()[offset..offset + NODE_WORDS]
                     };
                     let a = SHA_BLOCK_SIZE + (NODE_SIZE * k);
                     buf[a..a + NODE_SIZE].copy_from_slice(parent_data.as_byte_slice());
                 };
-
-                // Advance pointer for the last base parent
-                cur_parent = &cur_parent[1..];
             }
         }
-        // Advance pointer for the last base parent
-        cur_parent = &cur_parent[1..];
     } else {
         base_parent_missing.set_upto(BASE_DEGREE as u8);
-        cur_parent = &cur_parent[BASE_DEGREE..];
     }
 
     if let Some(exp_labels) = exp_labels {
+        let exp_parents = BASE_DEGREE..DEGREE;
         // Read from each of the expander parent nodes
-        for k in BASE_DEGREE..DEGREE {
+        for k in exp_parents {
             let parent_data = unsafe {
-                let offset = cur_parent[0] as usize * NODE_WORDS;
+                let offset = cur_parent[k] as usize * NODE_WORDS;
                 &exp_labels.as_slice()[offset..offset + NODE_WORDS]
             };
             let a = SHA_BLOCK_SIZE + (NODE_SIZE * k);
             buf[a..a + NODE_SIZE].copy_from_slice(parent_data.as_byte_slice());
-            cur_parent = &cur_parent[1..];
         }
     }
 }
@@ -346,8 +345,8 @@ fn create_layer_labels(
                 // Grab the current slot of the ring_buf
                 let buf = unsafe { ring_buf.slot_mut(cur_slot) };
                 // Fill in the base parents
+                let bpm = unsafe { base_parent_missing.get_mut(cur_slot) };
                 for k in 0..BASE_DEGREE {
-                    let bpm = unsafe { base_parent_missing.get(cur_slot) };
                     if bpm.get(k) {
                         let source = unsafe {
                             let start = cur_parent_ptr[0] as usize * NODE_WORDS;
@@ -361,6 +360,7 @@ fn create_layer_labels(
                     cur_parent_ptr = &cur_parent_ptr[1..];
                     cur_parent_ptr_offset += 1;
                 }
+                *bpm = BitMask::default();
 
                 // Expanders are already all filled in (layer 1 doesn't use expanders)
                 cur_parent_ptr = &cur_parent_ptr[EXP_DEGREE..];
@@ -467,6 +467,7 @@ pub fn create_labels_for_encoding<Tree: 'static + MerkleTreeTrait, T: AsRef<[u8]
         DEGREE,
         Some(default_cache_size as usize),
         &parents_cache.path,
+        parents_cache.api_version,
     )?;
 
     for (layer, layer_state) in (1..=layers).zip(layer_states.iter()) {
@@ -565,6 +566,7 @@ pub fn create_labels_for_decoding<Tree: 'static + MerkleTreeTrait, T: AsRef<[u8]
         DEGREE,
         Some(default_cache_size as usize),
         &parents_cache.path,
+        parents_cache.api_version,
     )?;
 
     for layer in 1..=layers {

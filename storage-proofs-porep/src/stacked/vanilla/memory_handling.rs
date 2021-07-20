@@ -12,6 +12,8 @@ use byte_slice_cast::{AsSliceOf, FromByteSlice};
 use log::{info, warn};
 use mapr::{Mmap, MmapMut, MmapOptions};
 
+use storage_proofs_core::api_version::ApiVersion;
+
 pub struct CacheReader<T> {
     file: File,
     bufs: UnsafeCell<[Mmap; 2]>,
@@ -20,6 +22,7 @@ pub struct CacheReader<T> {
     window_size: usize,
     cursor: IncrementingCursor,
     consumer: AtomicU64,
+    api_version: ApiVersion,
     _t: PhantomData<T>,
 }
 
@@ -93,7 +96,12 @@ impl IncrementingCursor {
 }
 
 impl<T: FromByteSlice> CacheReader<T> {
-    pub fn new(filename: &Path, window_size: Option<usize>, degree: usize) -> Result<Self> {
+    pub fn new(
+        filename: &Path,
+        window_size: Option<usize>,
+        degree: usize,
+        api_version: ApiVersion,
+    ) -> Result<Self> {
         info!("initializing cache");
         let file = File::open(filename)?;
         let size = File::metadata(&file)?.len() as usize;
@@ -126,6 +134,7 @@ impl<T: FromByteSlice> CacheReader<T> {
             // The furthest window from which the cache has yet been read.
             cursor: IncrementingCursor::new(0),
             consumer: AtomicU64::new(0),
+            api_version,
             _t: PhantomData::<T>,
         })
     }
@@ -184,6 +193,10 @@ impl<T: FromByteSlice> CacheReader<T> {
         bufs[1] = buf1;
         self.cursor.store(0);
         Ok(())
+    }
+
+    pub fn api_version(&self) -> ApiVersion {
+        self.api_version
     }
 
     fn map_buf(offset: u64, len: usize, file: &File) -> Result<Mmap> {
@@ -300,8 +313,9 @@ pub fn setup_create_label_memory(
     degree: usize,
     window_size: Option<usize>,
     cache_path: &Path,
+    api_version: ApiVersion,
 ) -> Result<(CacheReader<u32>, MmapMut, MmapMut)> {
-    let parents_cache = CacheReader::new(cache_path, window_size, degree)?;
+    let parents_cache = CacheReader::new(cache_path, window_size, degree, api_version)?;
     let layer_labels = allocate_layer(sector_size)?;
     let exp_labels = allocate_layer(sector_size)?;
 

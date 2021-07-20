@@ -143,6 +143,11 @@ where
 
         ParentCache::new(cache_size, cache_entries, self)
     }
+
+    pub fn api_version(&self) -> ApiVersion {
+        self.api_version
+    }
+
     pub fn copy_parents_data_exp(
         &self,
         node: u32,

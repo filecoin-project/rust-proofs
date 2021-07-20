@@ -36,11 +36,6 @@ impl<'a, T> UnsafeSlice<'a, T> {
     }
 
     #[inline]
-    pub unsafe fn get(&self, index: usize) -> &'a T {
-        &*self.ptr.add(index)
-    }
-
-    #[inline]
     pub unsafe fn get_mut(&self, index: usize) -> &'a mut T {
         &mut *self.ptr.add(index)
     }
