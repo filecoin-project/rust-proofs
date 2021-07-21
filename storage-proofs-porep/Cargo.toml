@@ -39,6 +39,8 @@ hwloc = { version = "0.3.0", optional = true }
 libc = "0.2"
 fdlimit = "0.2.0"
 fr32 = { path = "../fr32", version = "^1.0.0", default-features = false }
+scheduler_client = {package = "client", git = "https://github.com/Zondax/filecoin-scheduling.git", branch= "dev", optional = true}
+rust-gpu-tools = { version = "0.3.0"}
 
 [target."cfg(target_arch = \"aarch64\")".dependencies]
 sha2 = { version = "0.9.3", features = ["compress", "asm"] }
@@ -55,7 +57,7 @@ filecoin-hashers = { path = "../filecoin-hashers", version = "^3.0.0", default-f
 
 [features]
 default = ["pairing", "gpu", "multicore-sdr"]
-gpu = ["storage-proofs-core/gpu", "filecoin-hashers/gpu", "neptune/opencl", "bellperson/gpu", "fr32/gpu"]
+gpu = ["storage-proofs-core/gpu", "filecoin-hashers/gpu", "neptune/opencl", "bellperson/gpu", "fr32/gpu", "scheduler_client"]
 pairing = ["storage-proofs-core/pairing", "bellperson/pairing", "neptune/pairing", "filecoin-hashers/pairing", "fr32/pairing"]
 blst = ["storage-proofs-core/blst", "bellperson/blst", "neptune/blst", "filecoin-hashers/blst", "fr32/blst"]
 single-threaded = []

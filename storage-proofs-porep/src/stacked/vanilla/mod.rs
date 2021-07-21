@@ -18,6 +18,8 @@ mod memory_handling;
 mod params;
 mod porep;
 mod proof;
+#[cfg(any(feature = "gpu"))]
+mod proof_ext;
 mod proof_scheme;
 #[cfg(feature = "multicore-sdr")]
 mod utils;

@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
 use anyhow::{ensure, Context, Result};
+use bellperson::groth16::BellTaskType;
 use filecoin_hashers::Hasher;
 use log::info;
 use storage_proofs_core::{
@@ -80,11 +81,20 @@ pub fn generate_window_post_with_vanilla<Tree: 'static + MerkleTreeTrait>(
         &vanilla_proofs,
     )?;
 
+    // tell the scheduler in bellperson what task it is,
+    // so the scheduler can handle timing requirements accordingly
+    // as well as resources that are meant to be used by this task
+    let post_type = match post_config.typ {
+        PoStType::Winning => BellTaskType::WinningPost,
+        PoStType::Window => BellTaskType::WindowPost,
+    };
+
     let proof = FallbackPoStCompound::prove_with_vanilla(
         &pub_params,
         &pub_inputs,
         partitioned_proofs,
         &groth_params,
+        Some(post_type),
     )?;
 
     info!("generate_window_post_with_vanilla:finish");
@@ -165,7 +175,18 @@ pub fn generate_window_post<Tree: 'static + MerkleTreeTrait>(
         sectors: &priv_sectors,
     };
 
-    let proof = FallbackPoStCompound::prove(&pub_params, &pub_inputs, &priv_inputs, &groth_params)?;
+    let post_type = match post_config.typ {
+        PoStType::Winning => BellTaskType::WinningPost,
+        PoStType::Window => BellTaskType::WindowPost,
+    };
+
+    let proof = FallbackPoStCompound::prove_with_type(
+        &pub_params,
+        &pub_inputs,
+        &priv_inputs,
+        &groth_params,
+        Some(post_type),
+    )?;
 
     info!("generate_window_post:finish");
 

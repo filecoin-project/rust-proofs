@@ -11,3 +11,8 @@ members = [
   "sha2raw",
   "filecoin-hashers",
 ]
+
+[patch.crates-io]
+bellperson = { git = "https://github.com/Zondax/bellperson.git", branch = "scheduler", version = "0.14", default-features = false }
+rust-gpu-tools = { version = "0.3.0", git = "https://github.com/Zondax/rust-gpu-tools.git" , branch = "unique_id"}
+neptune = { version = "3.0.0", default-features = false, git = "https://github.com/filecoin-project/neptune.git", branch = "granularity" }

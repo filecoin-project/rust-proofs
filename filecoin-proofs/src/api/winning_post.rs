@@ -23,6 +23,8 @@ use crate::{
     PoStType,
 };
 
+use bellperson::groth16::BellTaskType;
+
 /// Generates a Winning proof-of-spacetime with provided vanilla proofs.
 pub fn generate_winning_post_with_vanilla<Tree: 'static + MerkleTreeTrait>(
     post_config: &PoStConfig,
@@ -81,11 +83,17 @@ pub fn generate_winning_post_with_vanilla<Tree: 'static + MerkleTreeTrait>(
         &vanilla_proofs,
     )?;
 
+    let post_type = match post_config.typ {
+        PoStType::Winning => BellTaskType::WinningPost,
+        PoStType::Window => BellTaskType::WindowPost,
+    };
+
     let proof = FallbackPoStCompound::prove_with_vanilla(
         &pub_params,
         &pub_inputs,
         partitioned_proofs,
         &groth_params,
+        Some(post_type),
     )?;
     let proof = proof.to_vec()?;
 
@@ -174,8 +182,18 @@ pub fn generate_winning_post<Tree: 'static + MerkleTreeTrait>(
         sectors: &priv_sectors,
     };
 
-    let proof =
-        FallbackPoStCompound::<Tree>::prove(&pub_params, &pub_inputs, &priv_inputs, &groth_params)?;
+    let post_type = match post_config.typ {
+        PoStType::Winning => BellTaskType::WinningPost,
+        PoStType::Window => BellTaskType::WindowPost,
+    };
+
+    let proof = FallbackPoStCompound::<Tree>::prove_with_type(
+        &pub_params,
+        &pub_inputs,
+        &priv_inputs,
+        &groth_params,
+        Some(post_type),
+    )?;
     let proof = proof.to_vec()?;
 
     info!("generate_winning_post:finish");

@@ -79,7 +79,7 @@ fn test_stacked_porep_extract_all_poseidon_top_8_8_2() {
 }
 
 fn test_extract_all<Tree: 'static + MerkleTreeTrait>() {
-    // pretty_env_logger::try_init();
+    //  pretty_env_logger::try_init();
 
     let rng = &mut XorShiftRng::from_seed(TEST_SEED);
     let replica_id: <Tree::Hasher as Hasher>::Domain =
@@ -181,7 +181,7 @@ fn test_extract_all<Tree: 'static + MerkleTreeTrait>() {
 
 #[test]
 fn test_stacked_porep_resume_seal() {
-    // pretty_env_logger::try_init().ok();
+    //pretty_env_logger::try_init().ok();
 
     type Tree = DiskTree<PoseidonHasher, U8, U8, U2>;
 

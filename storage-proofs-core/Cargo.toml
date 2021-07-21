@@ -45,6 +45,7 @@ gperftools = { version = "0.2", optional = true }
 num_cpus = "1.10.1"
 semver = "0.11.0"
 fr32 = { path = "../fr32", version = "^1.0.0", default-features = false }
+scheduler_client = {package = "client", git = "https://github.com/Zondax/filecoin-scheduling.git", branch= "dev", optional = true}
 
 [dev-dependencies]
 proptest = "0.10"
@@ -63,7 +64,7 @@ big-sector-sizes-bench = []
 measurements = ["cpu-time", "gperftools"]
 profile = ["measurements"]
 
-gpu = ["bellperson/gpu", "neptune/opencl", "filecoin-hashers/gpu", "fr32/gpu"]
+gpu = ["bellperson/gpu", "neptune/opencl", "filecoin-hashers/gpu", "fr32/gpu", "scheduler_client"]
 pairing = ["bellperson/pairing", "neptune/pairing", "bellperson/pairing", "filecoin-hashers/pairing", "fr32/pairing"]
 blst = ["bellperson/blst", "neptune/blst", "bellperson/blst", "filecoin-hashers/blst", "fr32/blst"]
 
