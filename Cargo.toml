@@ -11,3 +11,8 @@ members = [
   "sha2raw",
   "filecoin-hashers",
 ]
+
+[patch.crates-io]
+rust-gpu-tools = { git = "https://github.com/filecoin-project/rust-gpu-tools", branch = "master" }
+neptune = { git = "https://github.com/filecoin-project/neptune", branch = "opencl3" }
+bellperson = { git = "https://github.com/filecoin-project/bellperson", branch = "opencl3" }

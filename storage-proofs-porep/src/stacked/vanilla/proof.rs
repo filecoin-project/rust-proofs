@@ -486,7 +486,7 @@ impl<'a, Tree: 'static + MerkleTreeTrait, G: 'static + Hasher> StackedDrg<'a, Tr
         use generic_array::GenericArray;
         use merkletree::store::DiskStore;
         use neptune::{
-            batch_hasher::BatcherType,
+            batch_hasher::Batcher,
             column_tree_builder::{ColumnTreeBuilder, ColumnTreeBuilderTrait},
         };
 
@@ -587,11 +587,14 @@ impl<'a, Tree: 'static + MerkleTreeTrait, G: 'static + Hasher> StackedDrg<'a, Tr
                 });
                 s.spawn(move |_| {
                     let _gpu_lock = GPU_LOCK.lock().expect("failed to get gpu lock");
+                    let column_batcher = Batcher::pick_gpu(max_gpu_column_batch_size)
+                        .expect("failed to create column batcher");
+                    let tree_batcher = Batcher::pick_gpu(max_gpu_tree_batch_size)
+                        .expect("failed to create tree batcher");
                     let mut column_tree_builder = ColumnTreeBuilder::<ColumnArity, TreeArity>::new(
-                        Some(BatcherType::OpenCL),
+                        Some(column_batcher),
+                        Some(tree_batcher),
                         nodes_count,
-                        max_gpu_column_batch_size,
-                        max_gpu_tree_batch_size,
                     )
                     .expect("failed to create ColumnTreeBuilder");
 
@@ -859,7 +862,7 @@ impl<'a, Tree: 'static + MerkleTreeTrait, G: 'static + Hasher> StackedDrg<'a, Tr
         use fr32::fr_into_bytes;
         use merkletree::merkle::{get_merkle_tree_cache_size, get_merkle_tree_leafs};
         use neptune::{
-            batch_hasher::BatcherType,
+            batch_hasher::Batcher,
             tree_builder::{TreeBuilder, TreeBuilderTrait},
         };
 
@@ -961,10 +964,11 @@ impl<'a, Tree: 'static + MerkleTreeTrait, G: 'static + Hasher> StackedDrg<'a, Tr
             });
             s.spawn(move |_| {
                 let _gpu_lock = GPU_LOCK.lock().expect("failed to get gpu lock");
+                let batcher =
+                    Batcher::pick_gpu(max_gpu_tree_batch_size).expect("failed to create batcher");
                 let mut tree_builder = TreeBuilder::<Tree::Arity>::new(
-                    Some(BatcherType::OpenCL),
+                    Some(batcher),
                     nodes_count,
-                    max_gpu_tree_batch_size,
                     tree_r_last_config.rows_to_discard,
                 )
                 .expect("failed to create TreeBuilder");
@@ -1406,7 +1410,7 @@ impl<'a, Tree: 'static + MerkleTreeTrait, G: 'static + Hasher> StackedDrg<'a, Tr
         use fr32::fr_into_bytes;
         use merkletree::merkle::{get_merkle_tree_cache_size, get_merkle_tree_leafs};
         use neptune::{
-            batch_hasher::BatcherType,
+            batch_hasher::Batcher,
             tree_builder::{TreeBuilder, TreeBuilderTrait},
         };
 
@@ -1422,11 +1426,11 @@ impl<'a, Tree: 'static + MerkleTreeTrait, G: 'static + Hasher> StackedDrg<'a, Tr
             let max_gpu_tree_batch_size = SETTINGS.max_gpu_tree_batch_size as usize;
 
             let _gpu_lock = GPU_LOCK.lock().expect("failed to get gpu lock");
+            let batcher =
+                Batcher::pick_gpu(max_gpu_tree_batch_size).expect("failed to create batcher");
             let mut tree_builder = TreeBuilder::<Tree::Arity>::new(
-                #[cfg(feature = "gpu")]
-                Some(BatcherType::OpenCL),
+                Some(batcher),
                 nodes_count,
-                max_gpu_tree_batch_size,
                 tree_r_last_config.rows_to_discard,
             )
             .expect("failed to create TreeBuilder");
