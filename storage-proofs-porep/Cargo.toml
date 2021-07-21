@@ -39,11 +39,7 @@ hwloc = { version = "0.3.0", optional = true }
 libc = "0.2"
 fdlimit = "0.2.0"
 fr32 = { path = "../fr32", version = "^1.0.0", default-features = false }
-
-[target."cfg(target_arch = \"aarch64\")".dependencies]
 sha2 = { version = "0.9.3", features = ["compress", "asm"] }
-[target."cfg(not(target_arch = \"aarch64\"))".dependencies]
-sha2 = { version = "0.9.3", features = ["compress"] }
 
 [dev-dependencies]
 tempfile = "3"
