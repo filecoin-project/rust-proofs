@@ -56,7 +56,7 @@ sha2raw = { path = "../sha2raw", version = "^3.0.0"}
 filecoin-hashers = { path = "../filecoin-hashers", version = "^3.0.0", default-features = false, features = ["blake2s", "sha256", "poseidon"] }
 
 [features]
-default = ["gpu", "pairing"]
+default = ["gpu", "blst"]
 simd = []
 asm = ["sha2/sha2-asm"]
 big-sector-sizes-bench = []

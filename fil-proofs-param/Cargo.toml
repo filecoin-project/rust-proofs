@@ -62,7 +62,7 @@ failure = "0.1.7"
 tempfile = "3"
 
 [features]
-default = ["gpu", "pairing"]
+default = ["gpu", "blst"]
 cpu-profile = ["gperftools"]
 heap-profile = ["gperftools/heap"]
 simd = ["storage-proofs-core/simd"]

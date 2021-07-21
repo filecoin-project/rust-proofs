@@ -53,7 +53,7 @@ structopt = "0.3.12"
 humansize = "1.1.0"
 
 [features]
-default = ["gpu", "measurements", "pairing"]
+default = ["gpu", "measurements", "blst"]
 gpu = [
     "storage-proofs-core/gpu",
     "storage-proofs-porep/gpu",
