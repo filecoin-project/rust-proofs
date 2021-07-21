@@ -13,4 +13,4 @@ members = [
 ]
 
 [patch.crates-io]
-bellperson = { git = "https://github.com/filecoin-project//bellperson", branch = "swap-pairing-for-blst" }
+bellperson = { git = "https://github.com/filecoin-project/bellperson", branch = "swap-pairing-for-blst" }
