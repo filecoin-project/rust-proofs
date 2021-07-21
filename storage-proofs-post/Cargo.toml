@@ -37,7 +37,7 @@ rand_xorshift = "0.2.0"
 filecoin-hashers = { path = "../filecoin-hashers", version = "^3.0.0", default-features = false, features = ["poseidon", "sha256", "blake2s"]}
 
 [features]
-default = ["pairing", "gpu"]
+default = ["blst", "gpu"]
 gpu = ["storage-proofs-core/gpu", "filecoin-hashers/gpu", "fr32/gpu", "neptune/opencl"]
 pairing = ["storage-proofs-core/pairing", "bellperson/pairing", "neptune/pairing", "filecoin-hashers/pairing", "fr32/pairing"]
 blst = ["storage-proofs-core/blst", "bellperson/blst", "neptune/blst", "filecoin-hashers/blst", "fr32/blst"]
